@@ -1,0 +1,23 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "espaker"
+            }
+        ],
+        "Category": "Multimedia",
+        "Description": "Simple Radio Player webpage on your desktop.",
+        "Icon": "radio",
+        "Id": "com.espaker.simpleradioplayer-plasma6",
+        "License": "GPL-2.0+",
+        "Name": "Simple Radio Player",
+        "Website": "https://github.com/espaker/com.espaker.simpleradioplayer-plasma6.git",
+        "github": "https://github.com/espaker/",
+        "Version": "1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-Plasma-Provides": [
+        "org.kde.plasma.multimedia"
+    ]
+}
