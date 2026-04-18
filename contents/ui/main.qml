@@ -13,6 +13,7 @@ import org.kde.plasma.components 3.0 as PlasmaComponents3
 import org.kde.plasma.extras 2.0 as PlasmaExtras
 import org.kde.kirigami 2.20 as Kirigami
 import org.kde.plasma.plasmoid 2.0
+import org.kde.plasma.private.mpris as Mpris
 
 PlasmoidItem {
     id: radioroot
@@ -23,23 +24,20 @@ PlasmoidItem {
     property bool isPlaying: false
     property var webviewRef: null
 
-    onWebviewRefChanged: {
-        if (webviewRef) playingPollTimer.start();
+    Mpris.Mpris2Model {
+        id: mprisModel
+
+        onCurrentPlayerChanged: {
+            radioroot.isPlaying = currentPlayer !== null
+                && currentPlayer.playbackStatus === Mpris.PlaybackStatus.Playing;
+        }
     }
 
-    Timer {
-        id: playingPollTimer
-        interval: 1000
-        repeat: true
-        running: false
-        onTriggered: {
-            if (!radioroot.webviewRef) return;
-            radioroot.webviewRef.runJavaScript(
-                "window.__radioPlaying === true ? 'true' : 'false'",
-                function(result) {
-                    radioroot.isPlaying = (result === 'true');
-                }
-            );
+    Connections {
+        target: mprisModel.currentPlayer
+        ignoreUnknownSignals: true
+        function onPlaybackStatusChanged() {
+            radioroot.isPlaying = mprisModel.currentPlayer.playbackStatus === Mpris.PlaybackStatus.Playing;
         }
     }
 
@@ -102,6 +100,15 @@ PlasmoidItem {
             source: Plasmoid.configuration.icon || Plasmoid.icon
             isMask: radioroot.isPlaying
             color: radioroot.isPlaying ? Kirigami.Theme.positiveTextColor : Kirigami.Theme.textColor
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            visible: radioroot.isPlaying && favIconLoader.item?.status === Image.Ready
+            color: "transparent"
+            border.color: Kirigami.Theme.positiveTextColor
+            border.width: 2
+            radius: width / 2
         }
     }
 
