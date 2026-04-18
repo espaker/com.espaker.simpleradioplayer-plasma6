@@ -20,6 +20,44 @@ PlasmoidItem {
     switchWidth: Kirigami.Units.gridUnit * 16
     switchHeight: Kirigami.Units.gridUnit * 23
 
+    property bool isPlaying: false
+    property var webviewRef: null
+
+    onWebviewRefChanged: {
+        if (webviewRef) playingPollTimer.start();
+    }
+
+    Timer {
+        id: playingPollTimer
+        interval: 1000
+        repeat: true
+        running: false
+        onTriggered: {
+            if (!radioroot.webviewRef) return;
+            radioroot.webviewRef.runJavaScript(
+                "window.__radioPlaying === true ? 'true' : 'false'",
+                function(result) {
+                    radioroot.isPlaying = (result === 'true');
+                }
+            );
+        }
+    }
+
+    function dispatchMiddleClick() {
+        if (!webviewRef) return;
+        webviewRef.runJavaScript(
+            "window.dispatchEvent(new CustomEvent('plasma-middle-click'))"
+        );
+    }
+
+    function dispatchScroll(up) {
+        if (!webviewRef) return;
+        var key = up ? 'ArrowUp' : 'ArrowDown';
+        webviewRef.runJavaScript(
+            "window.dispatchEvent(new KeyboardEvent('keydown',{key:'" + key + "',bubbles:true,cancelable:true}))"
+        );
+    }
+
     // Only exists because the default CompactRepresentation doesn't expose
     // a way to display arbitrary images; it can only show icons.
     // TODO remove once it gains that feature.
@@ -45,10 +83,25 @@ PlasmoidItem {
             onTapped: radioroot.expanded = !wasExpanded
         }
 
+        TapHandler {
+            acceptedButtons: Qt.MiddleButton
+            onTapped: radioroot.dispatchMiddleClick()
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.NoButton
+            onWheel: wheel => {
+                radioroot.dispatchScroll(wheel.angleDelta.y > 0);
+            }
+        }
+
         Kirigami.Icon {
             anchors.fill: parent
             visible: favIconLoader.item?.status !== Image.Ready
             source: Plasmoid.configuration.icon || Plasmoid.icon
+            isMask: radioroot.isPlaying
+            color: radioroot.isPlaying ? Kirigami.Theme.positiveTextColor : Kirigami.Theme.textColor
         }
     }
 
@@ -70,7 +123,10 @@ PlasmoidItem {
                 id: radiowebview
                 anchors.fill: parent
                 onUrlChanged: plasmoid.configuration.url = url;
-                Component.onCompleted: url = plasmoid.configuration.url;
+                Component.onCompleted: {
+                    radioroot.webviewRef = radiowebview;
+                    url = plasmoid.configuration.url;
+                }
 
                 readonly property bool useMinViewWidth : plasmoid.configuration.useMinViewWidth
 
@@ -118,8 +174,11 @@ PlasmoidItem {
                 onLoadingChanged: loadingInfo => {
                     if (loadingInfo.status === WebEngineLoadingInfo.LoadStartedStatus) {
                         infoButton.dismiss();
-                    } else if (loadingInfo.status === WebEngineLoadingInfo.LoadSucceededStatus && useMinViewWidth) {
-                        updateZoomTimer.start();
+                        radioroot.isPlaying = false;
+                    } else if (loadingInfo.status === WebEngineLoadingInfo.LoadSucceededStatus) {
+                        if (useMinViewWidth) {
+                            updateZoomTimer.start();
+                        }
                     }
                 }
 

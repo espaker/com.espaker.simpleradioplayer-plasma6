@@ -9,6 +9,6 @@ Using webview to show [Radio](https://radio.espaker.com/)
 Just clone the project :
 
 run the command on terminal
-`git clone https://github.com/espaker/com.espaker.simpleradioplayer-plasma6.git .local/share/plasma/plasmoids/`
+`git clone https://github.com/espaker/com.espaker.simpleradioplayer-plasma6.git ~/.local/share/plasma/plasmoids/`
 
-Or download source and move the folder to `.local/share/plasma/plasmoids/`
+Or download source and move the folder to `~/.local/share/plasma/plasmoids/`
